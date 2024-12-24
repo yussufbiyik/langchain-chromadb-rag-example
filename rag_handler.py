@@ -18,7 +18,7 @@ except Exception as e:
     print(f"Error loading model: {e}\n Make sure you have installed the model, if not, run:\n ollama pull model_name")
 
 # Initial message // İlk mesaj
-model.invoke(SystemMessage("You are a helpful assistant that can answer questions about the given documents, only answer questions that are related to the documents if there are any documents."))
+model.invoke([SystemMessage("You are a helpful assistant that can answer questions about the given documents, only answer questions that are related to the documents if there are any documents.")])
 
 def get_response(user_input):
     messages = [HumanMessage(user_input)]
