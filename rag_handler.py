@@ -1,22 +1,38 @@
 from langchain_core.messages import HumanMessage, SystemMessage
-# Ollama related
+# Ollama related // Ollama ile alakalı
 from langchain_ollama.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 
-# Load the model
-selected_model = "llama3.2"
+import argparse
 
+parser = argparse.ArgumentParser(description="RAG example using langchain & Chromadb")
+parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
+parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
+parser.add_argument("--ollama-adress", type=str, default="http://127.0.0.1:11434 ", help="Ollama server adress")
+args = parser.parse_args()
+
+# Load the model // Modeli yükle
 try:
-    model = ChatOllama(model=selected_model)
+    model = ChatOllama(model=args.model, ollama_adress=args.ollama_adress)
 except Exception as e:
     print(f"Error loading model: {e}\n Make sure you have installed the model, if not, run:\n ollama pull model_name")
 
-messages = [
-    SystemMessage("You are a chatbot"),
-    HumanMessage("Hello, how are you?"),
-]
+# Initial message // İlk mesaj
+model.invoke(SystemMessage("You are a helpful assistant that can answer questions about the given documents, only answer questions that are related to the documents if there are any documents."))
 
-# model.invoke(messages)
+def get_response(user_input):
+    messages = [HumanMessage(user_input)]
+    return model.invoke(messages)
 
-for message_chunk in model.stream(messages):
-    print(message_chunk.content, end="")
+if __name__ == '__main__':
+    print("Welcome, type 'help' for help and 'exit' to exit.")
+    while True:
+        user_input = input(">> ")
+        if user_input == "exit":
+            print("Goodbye!")
+            break
+        if user_input == "help":
+            print(parser.format_help())
+            continue
+        response = get_response(user_input)
+        print(response.content)
