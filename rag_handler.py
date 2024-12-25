@@ -3,17 +3,17 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_ollama.chat_models import ChatOllama
 from langchain_community.embeddings import OllamaEmbeddings
 
+# Argument parsing // Argüman ayrıştırma
 import argparse
-
 parser = argparse.ArgumentParser(description="RAG example using langchain & Chromadb")
 parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
 parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
-parser.add_argument("--ollama-adress", type=str, default="http://127.0.0.1:11434 ", help="Ollama server adress")
+parser.add_argument("--ollama-address", type=str, default="http://127.0.0.1:11434 ", help="Ollama server address")
 args = parser.parse_args()
 
 # Load the model // Modeli yükle
 try:
-    model = ChatOllama(model=args.model, ollama_adress=args.ollama_adress)
+    model = ChatOllama(model=args.model, ollama_address=args.ollama_address)
 except Exception as e:
     print(f"Error loading model: {e}\n Make sure you have installed the model, if not, run:\n ollama pull model_name")
 
