@@ -6,5 +6,6 @@ My attempt at implementing RAG on Ollama and other LLM services using chromadb a
 - [X] Continuously listen for input
 - [X] Continuously monitor changes in the RAG ingestion folder
 - [ ] Persistant memory using Chromadb
+- [ ] Refactor
 - [ ] Dockerizing
 - [ ] Adding other LLM services (maybe?)
