@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description="RAG example using langchain & Chro
 parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
 parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
 parser.add_argument("--database-folder", type=str, default="./database", help="Folder to store the database")
+parser.add_argument("--system-prompt", type=str, default="You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Keep the answer concise and use short sentences unless told to do otherwise.", help="System prompt for the ai model to use")
 parser.add_argument("--ollama-address", type=str, default="http://127.0.0.1:11434", help="Ollama server address")
 args = parser.parse_args()
 
@@ -27,7 +28,7 @@ except Exception as e:
     print(f"Error loading model: {e}\n Make sure you have installed the model and ollama is running")
 
 # Initial message // İlk mesaj
-model.invoke([SystemMessage("You are a helpful assistant that can answer questions about the given documents, only answer questions that are related to the documents if there are any documents.")])
+model.invoke([SystemMessage(args.system_prompt)])
 
 def get_response(user_input):
     return model.invoke([HumanMessage(user_input)])
@@ -62,6 +63,7 @@ class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
         else:
             print("Unsupported file type")
             return
+        # Split the text and add to the database // Metni böl ve veritabanına ekle
         chunks = text_splitter.split_documents(docs)
         vector_store.add_documents(documents=chunks)
     def on_deleted(self, event):
