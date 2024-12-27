@@ -9,7 +9,7 @@ from langchain_core.prompts import PromptTemplate
 from langchain_ollama.chat_models import ChatOllama
 from langchain_community.embeddings import FastEmbedEmbeddings
 # For document loading, splitting, storing // Belge yükleme, bölme, saklama
-from langchain_community.document_loaders import DirectoryLoader, PyPDFLoader, Docx2txtLoader, csv_loader, TextLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, csv_loader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 
