@@ -42,7 +42,6 @@ def get_response(user_input, useRAG=False):
             template=template
         )
         prompt = prompt_template.format(context=context, user_input=user_input)
-        print(prompt)
         return model.invoke([HumanMessage(prompt)])
     return model.invoke([HumanMessage(user_input)])
 
