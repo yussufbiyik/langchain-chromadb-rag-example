@@ -2,4 +2,6 @@ langchain
 langchain-core
 langchain-ollama
 langchain-community
+chromadb
+langchain_chroma
 watchdog
