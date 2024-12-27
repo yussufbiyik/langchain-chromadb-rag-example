@@ -1,4 +1,5 @@
 from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.prompts import PromptTemplate
 # Ollama related // Ollama ile alakalı
 from langchain_ollama.chat_models import ChatOllama
 from langchain_community.embeddings import FastEmbedEmbeddings
@@ -30,7 +31,19 @@ except Exception as e:
 # Initial message // İlk mesaj
 model.invoke([SystemMessage(args.system_prompt)])
 
-def get_response(user_input):
+template = args.system_prompt+"\n\nContext: {context}\n\nQuestion: {user_input}"
+
+def get_response(user_input, useRAG=False):
+    if useRAG:
+        print("Using RAG")
+        context = vector_store.similarity_search(user_input)
+        prompt_template = PromptTemplate(
+            input_variables=["context", "user_input"],
+            template=template
+        )
+        prompt = prompt_template.format(context=context, user_input=user_input)
+        print(prompt)
+        return model.invoke([HumanMessage(prompt)])
     return model.invoke([HumanMessage(user_input)])
 
 # Initialize the Chroma database // Chroma veritabanını başlat
@@ -85,6 +98,10 @@ if __name__ == '__main__':
             if user_input == "help":
                 print(parser.format_help())
                 continue
+            # Use RAG if chromadb exists // Chromadb varsa RAG kullan
+            # Otherwise, just use the model // Aksi takdirde sadece modeli kullan
+            if vector_store._collection.count() > 0:
+                response = get_response(user_input, True)
             response = get_response(user_input)
             print(response.content)
     except KeyboardInterrupt:
