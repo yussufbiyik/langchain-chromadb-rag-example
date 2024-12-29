@@ -18,7 +18,7 @@ def parse_arguments():
     parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
     parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
     parser.add_argument("--database-folder", type=str, default="./database", help="Folder to store the database")
-    parser.add_argument("--system-prompt", type=str, default="You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If you don't know the answer, just say that you don't know. Keep the answer concise and use short sentences unless told to do otherwise.", help="System prompt for the ai model to use")
+    parser.add_argument("--system-prompt", type=str, default="You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer to the question is not mentioned in the context, just say that you don't know and don't say anything else. Keep the answer concise and use short sentences unless told to do otherwise.", help="System prompt for the ai model to use")
     parser.add_argument("--ollama-address", type=str, default="http://127.0.0.1:11434", help="Ollama server address")
     return parser.parse_args()
 args = parse_arguments()
@@ -30,16 +30,28 @@ def load_model():
         print(f"Error loading model: {e}\n Make sure you have installed the model and ollama is running")
         exit(1)
 
-template = args.system_prompt+"\n\nContext: {context}\n\nQuestion: {user_input}"
+template = """Use the following context to answer the question. 
+Context: {context}
+Question: {user_input}
+"""
+
 def get_response(model, user_input, useRAG=False):
     if useRAG:
-        context = vector_store.similarity_search(user_input)
+        related_docs = vector_store.similarity_search(
+            query=user_input,
+            k=2
+        )
         prompt_template = PromptTemplate(
             input_variables=["context", "user_input"],
             template=template
         )
+        context = ""
+        for doc in related_docs:
+            context += doc.page_content+"\n"
         prompt = prompt_template.format(context=context, user_input=user_input)
-        return model.invoke([HumanMessage(prompt)])
+        return model.invoke([
+            HumanMessage(prompt),
+        ])
     return model.invoke([HumanMessage(user_input)])
 
 
@@ -107,7 +119,8 @@ def main():
             # Otherwise, just use the model // Aksi takdirde sadece modeli kullan
             if vector_store._collection.count() > 0:
                 response = get_response(model, user_input, True)
-            response = get_response(model, user_input)
+            else:
+                response = get_response(model, user_input)
             print(response.content)
     except KeyboardInterrupt:
         observer.stop()
