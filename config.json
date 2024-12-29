@@ -1,6 +1,6 @@
 {
     "rag_options":{
-        "delete_after_ingestion":true,
+        "delete_file_after_ingestion":true,
         "clear_database_on_start":false,
         "similarity_threshold":0.3,
         "results_to_return":2

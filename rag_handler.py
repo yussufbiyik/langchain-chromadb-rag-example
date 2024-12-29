@@ -2,6 +2,7 @@
 import argparse
 import json
 # For directory watcher // Dizin izleyici için
+import os
 import watchdog
 from watchdog.observers import Observer
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -51,21 +52,21 @@ vector_store = initialize_chroma()
 
 # Load the document based on the file extension // Dosya uzantısına göre belgeyi yükle
 def load_document(file_path):
+    loader = None
     if file_path.endswith(".pdf"):
         loader = PyPDFLoader(file_path)
-        return loader.load();
     elif file_path.endswith(".docx"):
         loader = Docx2txtLoader(file_path)
-        return loader.load();
     elif file_path.endswith(".csv"):
         loader = csv_loader.CSVLoader(file_path)
-        return loader.load();
     elif file_path.endswith(".txt"):
         loader = TextLoader(file_path)
-        return loader.load();
     else:
         print("Unsupported file type")
         return
+    if config["rag_options"]["delete_file_after_ingestion"] and os.path.exists(file_path):
+        os.remove(file_path)
+    return loader.load()
 # Watch the ingestion folder // İçe aktarma klasörünü izle
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
 class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
@@ -92,16 +93,12 @@ prompt_template = PromptTemplate(
 def get_response(model, user_input, useRAG=False):
     if useRAG:
         # Get the related documents // İlgili belgeleri al
-        # related_docs = vector_store.similarity_search(
-        #     query=user_input,
-        #     k=config["rag_options"]["results_to_return"],
-        # )
         related_docs = vector_store.similarity_search_with_relevance_scores(
             query=user_input,
             k=config["rag_options"]["results_to_return"],
             score_threshold= config["rag_options"]["similarity_threshold"],
         )
-        # Combine the context of the related documents // İlgili belgelerin bağlamını birleştir
+        # Combine the contents of the related document parts // İlgili belge parçalarının içeriklerini birleştir
         context = ""
         for result in related_docs:
             doc = result[0]
@@ -116,6 +113,8 @@ def main():
     model = load_model()
     if not model:
         return
+    if config["rag_options"]["clear_database_on_start"] and vector_store._collection.count() > 0:
+        vector_store.reset_collection()
     # System prompt // Sistem promptu
     model.invoke([SystemMessage(args.system_prompt)])
     
