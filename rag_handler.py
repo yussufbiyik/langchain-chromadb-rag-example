@@ -64,18 +64,20 @@ def load_document(file_path):
     else:
         print("Unsupported file type")
         return
-    if config["rag_options"]["delete_file_after_ingestion"] and os.path.exists(file_path):
-        os.remove(file_path)
     return loader.load()
 # Watch the ingestion folder // İçe aktarma klasörünü izle
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
 class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
     def on_created(self, event):
+        print("\nLOG:Ingesting file")
         docs = load_document(event.src_path)
+        if config["rag_options"]["delete_file_after_ingestion"] and os.path.exists(event.src_path):
+            os.remove(event.src_path)
         # Split the text into chunks // Metni parçalara böl 
         chunks = text_splitter.split_documents(docs)
         # Add the documents to the database // Belgeyi veritabanına ekle
         vector_store.add_documents(documents=chunks)
+        print("\nLOG:File ingested")
     def on_deleted(self, event):
         print("\nLOG:File deleted")
 # Start the folder observer // Klasör gözlemcisini başlat

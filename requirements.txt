@@ -5,3 +5,4 @@ langchain-community
 chromadb
 langchain_chroma
 watchdog
+docx2txt
