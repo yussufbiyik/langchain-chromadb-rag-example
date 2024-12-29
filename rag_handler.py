@@ -30,31 +30,6 @@ def load_model():
         print(f"Error loading model: {e}\n Make sure you have installed the model and ollama is running")
         exit(1)
 
-template = """Use the following context to answer the question. 
-Context: {context}
-Question: {user_input}
-"""
-
-def get_response(model, user_input, useRAG=False):
-    if useRAG:
-        related_docs = vector_store.similarity_search(
-            query=user_input,
-            k=2
-        )
-        prompt_template = PromptTemplate(
-            input_variables=["context", "user_input"],
-            template=template
-        )
-        context = ""
-        for doc in related_docs:
-            context += doc.page_content+"\n"
-        prompt = prompt_template.format(context=context, user_input=user_input)
-        return model.invoke([
-            HumanMessage(prompt),
-        ])
-    return model.invoke([HumanMessage(user_input)])
-
-
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
 def initialize_chroma():
     return Chroma(
@@ -95,6 +70,29 @@ class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
 observer = Observer()
 observer.schedule(FileSystemWatcher(), path=args.ingestion_folder, recursive=True)
 observer.start()
+
+prompt_template = PromptTemplate(
+    input_variables=["context", "user_input"],
+    template="""Use the following context to answer the question. 
+        Context: {context}
+        Question: {user_input}
+    """
+)
+def get_response(model, user_input, useRAG=False):
+    if useRAG:
+        related_docs = vector_store.similarity_search(
+            query=user_input,
+            k=2
+        )
+        # Combine the context of the related documents // İlgili belgelerin bağlamını birleştir
+        context = ""
+        for doc in related_docs:
+            context += doc.page_content+"\n"
+        prompt = prompt_template.format(context=context, user_input=user_input)
+        return model.invoke([
+            HumanMessage(prompt),
+        ])
+    return model.invoke([HumanMessage(user_input)])
 
 def main():
     model = load_model()
