@@ -1,5 +1,6 @@
 # Argument parsing // Argüman ayrıştırma
 import argparse
+import json
 # For directory watcher // Dizin izleyici için
 import watchdog
 from watchdog.observers import Observer
@@ -13,24 +14,33 @@ from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader, cs
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_chroma import Chroma
 
+
+with open("config.json", mode="r", encoding="utf-8") as read_file:
+    global config
+    config = json.load(read_file)
+
 parser = argparse.ArgumentParser(description="RAG example using langchain & Chromadb")
 def parse_arguments():
     parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
     parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
     parser.add_argument("--database-folder", type=str, default="./database", help="Folder to store the database")
-    parser.add_argument("--system-prompt", type=str, default="You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer to the question is not mentioned in the context, just say that you don't know and don't say anything else. Keep the answer concise and use short sentences unless told to do otherwise.", help="System prompt for the ai model to use")
+    parser.add_argument("--system-prompt", type=str, default=config["llm_options"]["system_prompt"], help="System prompt for the ai model to use")
     parser.add_argument("--ollama-address", type=str, default="http://127.0.0.1:11434", help="Ollama server address")
     return parser.parse_args()
 args = parse_arguments()
 
 def load_model():
     try:
-        return ChatOllama(model=args.model, base_url=args.ollama_address)
+        return ChatOllama(
+                model=args.model, 
+                base_url=args.ollama_address,
+                temperature=config["llm_options"]["temperature"],
+                num_predict=config["llm_options"]["tokens_to_generate"],
+            )
     except Exception as e:
         print(f"Error loading model: {e}\n Make sure you have installed the model and ollama is running")
         exit(1)
 
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
 def initialize_chroma():
     return Chroma(
         collection_name="information",
@@ -57,6 +67,7 @@ def load_document(file_path):
         print("Unsupported file type")
         return
 # Watch the ingestion folder // İçe aktarma klasörünü izle
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=1024, chunk_overlap=100)
 class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
     def on_created(self, event):
         docs = load_document(event.src_path)
@@ -80,13 +91,20 @@ prompt_template = PromptTemplate(
 )
 def get_response(model, user_input, useRAG=False):
     if useRAG:
-        related_docs = vector_store.similarity_search(
+        # Get the related documents // İlgili belgeleri al
+        # related_docs = vector_store.similarity_search(
+        #     query=user_input,
+        #     k=config["rag_options"]["results_to_return"],
+        # )
+        related_docs = vector_store.similarity_search_with_relevance_scores(
             query=user_input,
-            k=2
+            k=config["rag_options"]["results_to_return"],
+            score_threshold= config["rag_options"]["similarity_threshold"],
         )
         # Combine the context of the related documents // İlgili belgelerin bağlamını birleştir
         context = ""
-        for doc in related_docs:
+        for result in related_docs:
+            doc = result[0]
             context += doc.page_content+"\n"
         prompt = prompt_template.format(context=context, user_input=user_input)
         return model.invoke([
