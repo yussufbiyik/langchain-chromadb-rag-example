@@ -7,7 +7,7 @@ My attempt at implementing RAG on Ollama and other LLM services using chromadb a
 - [X] Continuously monitor changes in the RAG ingestion folder
 - [X] Persistant memory using Chromadb
 - [ ] Support for ChromaDB running on another address (if that's possible?)
-- [ ] Refactor
+- [X] Refactor
 - [ ] Dockerize
 - [ ] Update readme to cover installation and troubleshooting etc.
 - [ ] Adding other LLM services (maybe?)
