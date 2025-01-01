@@ -1,5 +1,6 @@
 import argparse
 import json
+import logging
 # For directory watcher // Dizin izleyici için
 import os
 import watchdog
@@ -7,6 +8,9 @@ from watchdog.observers import Observer
 
 import rag_handler as rh
 import model_handler as mh
+
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 with open("config.json", mode="r", encoding="utf-8") as read_file:
     global config
@@ -23,36 +27,34 @@ def parse_arguments():
     return parser.parse_args()
 args = parse_arguments()
 
-
 # Watch the ingestion folder // İçe aktarma klasörünü izle
 class FileSystemWatcher(watchdog.events.FileSystemEventHandler):
     def on_created(self, event):
-        print("\nLOG:Ingesting file")
+        logging.info(f"Detected and Ingesting: {event.src_path}")
         docs = rag_handler.load_document(event.src_path)
         # Delete the file after ingestion if thew option is true in config // Config'de belirlendiyse içe aktarmadan sonra dosyayı sil
         if config["rag_options"]["delete_file_after_ingestion"] and os.path.exists(event.src_path):
             os.remove(event.src_path)
+            logging.info(f"Deleted After Ingestion: {event.src_path}")
         # Add the documents to the database // Belgeyi veritabanına ekle
         rag_handler.add_document_to_chroma(docs)
-        print("\nLOG:File ingested")
+        logging.info(f"Ingested: {event.src_path}")
     def on_deleted(self, event):
-        print("\nLOG:File deleted")
+        logging.info(f"Deleted: {event.src_path}")
 # Start the folder observer // Klasör gözlemcisini başlat
 observer = Observer()
 observer.schedule(FileSystemWatcher(), path=args.ingestion_folder, recursive=True)
 observer.start()
-
 
 model_handler = mh.ModelHandler(args, config)
 rag_handler = rh.RAGHandler(args, config)
 
 model = model_handler.load_model()
 if not model:
-    print("Error loading model. Make sure you have installed the model and Ollama is running")
+    logging.error("Error loading model. Make sure you have installed the model and Ollama is running. Exiting...")
     exit(1)
 if config["rag_options"]["clear_database_on_start"] and rag_handler.vector_store._collection.count() > 0:
     rag_handler.vector_store.reset_collection()
-
 
 def main():
     # Main loop // Ana döngü
@@ -62,7 +64,8 @@ def main():
             user_input = input(">> ")
             if user_input == "exit":
                 observer.stop()
-                print("\nGoodbye!")
+                print("Goodbye!")
+                logging.info("Exiting...")
                 break
             if user_input == "help":
                 print(parser.format_help())
@@ -74,10 +77,10 @@ def main():
                 response = model_handler.get_response(user_input, related_docs, True)
             else:
                 response = model_handler.get_response(user_input, None, False)
-            print(response.content)
+            print(f"Response: {response.content}")
     except KeyboardInterrupt:
         observer.stop()
-        print("\nGoodbye!")
+        logging.info("Exiting...")
     observer.join()
 
 if __name__ == '__main__':
