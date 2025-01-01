@@ -6,7 +6,7 @@
         "results_to_return":2
     },
     "llm_options":{
-        "system_prompt":"You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer to the question is not mentioned in the context, just say that you don't know and don't say anything else. Keep the answer concise and use short sentences unless told to do otherwise.",
+        "system_prompt":"You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer to the question is not mentioned in the context, just say that you don't know and don't say anything else unless the question is about your previous responses or if it's small talk. Keep the answer concise and use short sentences unless told to do otherwise.",
         "temperature":0.8,
         "tokens_to_generate":256
     }
