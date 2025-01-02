@@ -22,6 +22,7 @@ pip install -r requirements.txt
 #### Running Locally
 You can then safely run the code.
 ```bash
+# You can use cli arguments after the app.py if you want to
 python app.py
 ```
 #### Running on Docker
