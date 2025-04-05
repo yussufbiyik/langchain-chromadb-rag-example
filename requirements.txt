@@ -7,3 +7,4 @@ langchain_chroma
 watchdog
 docx2txt
 fastembed
+pypdf
