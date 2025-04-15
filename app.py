@@ -22,6 +22,7 @@ def parse_arguments():
     parser.add_argument("--model", type=str, default="llama3.2", help="Name of the model to use")
     parser.add_argument("--ingestion-folder", type=str, default="./ingest", help="Folder to ingest documents from")
     parser.add_argument("--database-folder", type=str, default="./database", help="Folder to store the database")
+    parser.add_argument("--rag-gpu", type=int, default=1, help="Whether to use GPU for RAG or not")
     parser.add_argument("--system-prompt", type=str, default=config["llm_options"]["system_prompt"], help="System prompt for the ai model to use")
     parser.add_argument("--ollama-address", type=str, default="http://127.0.0.1:11434", help="Ollama server address")
     return parser.parse_args()

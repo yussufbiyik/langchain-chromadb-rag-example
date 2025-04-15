@@ -3,7 +3,8 @@
         "delete_file_after_ingestion":true,
         "clear_database_on_start":false,
         "similarity_threshold":0.3,
-        "results_to_return":2
+        "results_to_return":2,
+        "use_gpu":true
     },
     "llm_options":{
         "system_prompt":"You are an assistant for question-answering tasks. Use the following pieces of retrieved context to answer the question. If the answer to the question is not mentioned in the context, just say that you don't know and don't say anything else unless the question is about your previous responses or if it's small talk. Keep the answer concise and use short sentences unless told to do otherwise.",

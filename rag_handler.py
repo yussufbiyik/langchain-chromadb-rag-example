@@ -12,10 +12,15 @@ class RAGHandler:
         self.vector_store = self.initialize_chroma()
 
     def initialize_chroma(self):
+        # Check if GPU is allowed by config or cli arguments // Config veya cli argümanlarıyla ile GPU'nun izin verilip verilmediğini kontrol et
+        providers = ["CPUExecutionProvider"]
+        if self.config["rag_options"]["use_gpu"] or self.cli_args.rag_gpu == 1:
+            providers.append("CUDAExecutionProvider")
+    
         return Chroma(
             collection_name="information",
             persist_directory=self.cli_args.database_folder,
-            embedding_function=FastEmbedEmbeddings(),
+            embedding_function=FastEmbedEmbeddings(providers=providers),
         )
 
     # Load the document based on the file extension // Dosya uzantısına göre belgeyi yükle
