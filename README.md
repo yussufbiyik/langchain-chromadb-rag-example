@@ -1,5 +1,8 @@
+
+</think>
+
 # langchain-chromadb-rag-example
-My attempt at implementing retreival augmented generation on Ollama and other LLM services using chromadb and langchain while also providing an easy to understand, clean code for others since basically nobody else does
+My attempt at implementing retrieval augmented generation on Ollama and other LLM services using chromadb and langchain while also providing an easy to understand, clean code for others since basically nobody else does
 
 (open for contributions)
 ## Getting Started
